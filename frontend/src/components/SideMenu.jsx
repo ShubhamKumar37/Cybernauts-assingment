@@ -1,6 +1,7 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useDispatch, useSelector } from 'react-redux';
-import { addFlow, updateFlow, deleteFlow, selectFlow } from '../redux/slices/flowSlice';
+import { addFlow, selectFlow, setFlows, deleteFlow, updateFlow } from '../redux/slices/flowSlice';  // Added setFlows action
+import axios from 'axios';
 
 const SideMenu = () => {
     const dispatch = useDispatch();
@@ -11,13 +12,43 @@ const SideMenu = () => {
     const [editFlowName, setEditFlowName] = useState(""); // For storing the flow name while editing
     const [isEditing, setIsEditing] = useState(false); // For toggle edit mode
 
+    // Fetch flows when component mounts
+    useEffect(() => {
+        const fetchFlows = async () => {
+            try {
+                const response = await axios.get('/api/users/', { withCredentials: true });
+                console.log("Fetched flows:", response.data.data);
+                dispatch(setFlows(response.data.data)); // Dispatch the fetched flows to Redux
+            } catch (error) {
+                console.error("Error fetching flows:", error);
+            }
+        };
+
+        fetchFlows();
+    }, [dispatch]);
+
     // Function to handle creating a new flow
-    const createNewFlow = () => {
+    const createNewFlow = async () => {
+        console.log("This is the new flow name  = ", newFlowName)
         if (newFlowName.trim()) {
-            const newFlow = { id: Date.now(), name: newFlowName }; // Create a new flow with a unique id
-            dispatch(addFlow(newFlow)); // Dispatch the addFlow action
-            dispatch(selectFlow(newFlow.id)); // Set the newly created flow as active
-            setNewFlowName("");
+            try {
+                const flowData = {
+                    userName: newFlowName, // Flow name
+                    nodes: [], // Start with an empty array for nodes
+                    edges: [], // Start with an empty array for edges
+                };
+
+                const response = await axios.post('/api/users/', flowData);
+
+                if (response.data.success) {
+                    const newFlow = response.data.data;
+                    dispatch(addFlow(newFlow)); // Add the new flow to Redux state
+                    dispatch(selectFlow(newFlow.id)); // Set it as the active flow
+                    setNewFlowName(""); // Reset the input field
+                }
+            } catch (error) {
+                console.error("Error creating flow:", error);
+            }
         }
     };
 
@@ -29,23 +60,35 @@ const SideMenu = () => {
     // Function to handle editing a flow's name
     const handleEditFlow = (flow) => {
         setIsEditing(true);
-        setEditFlowName(flow.name);
+        setEditFlowName(flow.userName); // Set the flow's current name to the edit state
     };
 
     // Function to save the edited flow name
     const saveEditedFlow = (flowId) => {
         if (editFlowName.trim()) {
-            const updatedFlow = { id: flowId, name: editFlowName };
+            const updatedFlow = { _id: flowId, userName: editFlowName };
             dispatch(updateFlow(updatedFlow)); // Dispatch the updateFlow action
             setIsEditing(false);
         }
     };
 
     // Function to handle deleting a flow
-    const handleDeleteFlow = (flowId) => {
-        dispatch(deleteFlow(flowId)); // Dispatch the deleteFlow action
-        if (activeFlow === flowId) {
-            dispatch(selectFlow(null)); // Reset active flow if deleted
+    const handleDeleteFlow = async (flowId, flowDbId) => {
+        try {
+            // Send DELETE request to backend to delete the flow
+            const response = await axios.delete(`/api/users/${flowDbId}`, { withCredentials: true });
+
+            if (response.data.success) {
+                // Dispatch the deleteFlow action to remove the flow from Redux state
+                dispatch(deleteFlow(flowId));
+
+                // If the active flow is deleted, reset the active flow
+                if (activeFlow === flowId) {
+                    dispatch(selectFlow(null));
+                }
+            }
+        } catch (error) {
+            console.error("Error deleting flow:", error);
         }
     };
 
@@ -71,7 +114,7 @@ const SideMenu = () => {
             <ul className="text-white">
                 {flows.map((flow) => (
                     <li
-                        key={flow.id}
+                        key={flow._id} // Use _id for MongoDB documents
                         className={`flex items-center justify-between cursor-pointer mb-2 p-2 rounded hover:bg-gray-700 ${activeFlow === flow.id ? "bg-gray-500" : ""}`}
                         onClick={() => handleFlowSelect(flow.id)}
                     >
@@ -80,11 +123,11 @@ const SideMenu = () => {
                                 <input
                                     type="text"
                                     value={editFlowName}
-                                    onChange={(e) => setEditFlowName(e.target.value)}
+                                    onChange={(e) => setEditFlowName(e.target.value)} // This binds the input to `editFlowName`
                                     className="p-1 w-full border border-gray-300 bg-black rounded"
                                 />
                             ) : (
-                                flow.name
+                                flow.userName // Display flow name (userName from backend)
                             )}
                         </span>
                         <div className="flex space-x-2 max-w-[40%] text-sm">
@@ -105,7 +148,7 @@ const SideMenu = () => {
                             )}
 
                             <button
-                                onClick={() => handleDeleteFlow(flow.id)}
+                                onClick={() => handleDeleteFlow(flow.id, flow._id)} // Use `_id` for deletion
                                 className="p-1 bg-red-500 text-white rounded"
                             >
                                 Delete

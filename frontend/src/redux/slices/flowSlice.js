@@ -1,4 +1,3 @@
-// redux/slices/flowSlice.js
 import { createSlice } from '@reduxjs/toolkit';
 
 const initialState = {
@@ -25,8 +24,11 @@ const flowSlice = createSlice({
     selectFlow: (state, action) => {
       state.selectedFlow = action.payload;
     },
+    setFlows: (state, action) => {
+      state.flowList = action.payload; // Set flows from API
+    }
   },
 });
 
-export const { addFlow, updateFlow, deleteFlow, selectFlow } = flowSlice.actions;
+export const { addFlow, updateFlow, deleteFlow, selectFlow, setFlows } = flowSlice.actions;
 export default flowSlice.reducer;

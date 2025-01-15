@@ -5,12 +5,12 @@ import { ApiError } from "../utils/ApiError.util.js";
 import { v4 as uuidv4 } from "uuid";
 
 export const createUser = asyncHandler(async (req, res) => {
-    const { username, age } = req.body;
-    if (!username || !age) {
-        throw new ApiError(400, "Username and age are required");
+    const { userName } = req.body;
+    if (!userName) {
+        throw new ApiError(400, "userName are required");
     }
-    const user = await User.create({ username, age });
-    res.status(201).json(new ApiResponse(201, "User created successfully", user));
+    const user = await User.create({ userName });
+    return res.status(201).json(new ApiResponse(201, "User created successfully", user));
 });
 
 export const getUser = asyncHandler(async (req, res) => {
@@ -19,7 +19,7 @@ export const getUser = asyncHandler(async (req, res) => {
     if (!user) {
         throw new ApiError(404, "User not found");
     }
-    res.status(200).json(new ApiResponse(200, "User fetched successfully", user));
+    return res.status(200).json(new ApiResponse(200, "User fetched successfully", user));
 });
 
 export const getAllUsers = asyncHandler(async (_, res) => {
@@ -29,16 +29,16 @@ export const getAllUsers = asyncHandler(async (_, res) => {
 
 export const updateUser = asyncHandler(async (req, res) => {
     const { id } = req.params;
-    const { username, age, hobbies } = req.body;
+    const { userName, nodes, edges } = req.body;
     const user = await User.findByIdAndUpdate(
         id,
-        { username, age, hobbies },
-        { new: true, runValidators: true }
+        { $set: { userName, nodes, edges } },
+        { new: true }
     );
     if (!user) {
         throw new ApiError(404, "User not found");
     }
-    res.status(200).json(new ApiResponse(200, "User updated successfully", user));
+    return res.status(200).json(new ApiResponse(200, "User updated successfully", user));
 });
 
 export const deleteUser = asyncHandler(async (req, res) => {
@@ -47,5 +47,5 @@ export const deleteUser = asyncHandler(async (req, res) => {
     if (!user) {
         throw new ApiError(404, "User not found");
     }
-    res.status(200).json(new ApiResponse(200, "User deleted successfully"));
+    return res.status(200).json(new ApiResponse(200, "User deleted successfully"));
 });
