@@ -25,7 +25,7 @@ const Flows = () => {
         setNodes((prevNodes) => [...prevNodes, newNode]);
 
         // Log the updated nodes state
-        console.log("Nodes after addNode: ", [...nodes, newNode]);
+        // console.log("Nodes after addNode: ", [...nodes, newNode]);
     };
 
     // Function to delete a node
@@ -34,8 +34,8 @@ const Flows = () => {
         setEdges((eds) => eds.filter((edge) => edge.source !== nodeId && edge.target !== nodeId));
 
         // Log the updated nodes and edges state after deletion
-        console.log("Nodes after handleDeleteNode: ", nodes.filter((node) => node.id !== nodeId));
-        console.log("Edges after handleDeleteNode: ", edges.filter((edge) => edge.source !== nodeId && edge.target !== nodeId));
+        // console.log("Nodes after handleDeleteNode: ", nodes.filter((node) => node.id !== nodeId));
+        // console.log("Edges after handleDeleteNode: ", edges.filter((edge) => edge.source !== nodeId && edge.target !== nodeId));
     };
 
     // Function to handle label change
@@ -47,7 +47,7 @@ const Flows = () => {
         );
 
         // Log the updated nodes state after label change
-        console.log("Nodes after handleLabelChange: ", nodes);
+        // console.log("Nodes after handleLabelChange: ", nodes);
     };
 
     // React Flow callback functions
@@ -71,17 +71,31 @@ const Flows = () => {
         textUpdater: TextUpdaterNode,
     };
 
-    console.log("this is nodes = ", nodes);
-    console.log("this is edges = ", edges);
+    const printAllData = () => {
+        console.log("This is Nodes = ", nodes);
+        console.log("This is Edges = ", edges);
+    }
+
+    // console.log("this is nodes = ", nodes);
+    // console.log("this is edges = ", edges);
 
     return (
         <div className=" h-[100vh]">
-            <button
-                onClick={addNode}
-                className="mb-4 px-4 py-2 bg-blue-500 text-white rounded absolute z-[1]"
-            >
-                Add Node
-            </button>
+            <div className='relative p-1'>
+                <button
+                    onClick={addNode}
+                    className="mb-4 px-4 py-2 bg-blue-500 text-white rounded absolute z-[1]"
+                >
+                    Add Node
+                </button>
+                <button
+                    onClick={printAllData}
+                    className="mb-4 px-4 py-2 left-[10rem] bg-blue-500 text-white rounded absolute z-[1]"
+                >
+                    Save
+                </button>
+
+            </div>
             <ReactFlow
                 nodes={nodes}
                 edges={edges}

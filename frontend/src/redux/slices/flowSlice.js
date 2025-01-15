@@ -23,7 +23,7 @@ const flowSlice = createSlice({
       state.flowList = state.flowList.filter(flow => flow.id !== action.payload);
     },
     selectFlow: (state, action) => {
-      state.selectedFlow = state.flowList.find(flow => flow.id === action.payload);
+      state.selectedFlow = action.payload;
     },
   },
 });
