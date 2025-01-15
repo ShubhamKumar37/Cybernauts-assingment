@@ -22,6 +22,11 @@ export const getUser = asyncHandler(async (req, res) => {
     res.status(200).json(new ApiResponse(200, "User fetched successfully", user));
 });
 
+export const getAllUsers = asyncHandler(async (_, res) => {
+    const users = await User.find();
+    return res.status(200).json(new ApiResponse(200, "Users fetched successfully", users));
+});
+
 export const updateUser = asyncHandler(async (req, res) => {
     const { id } = req.params;
     const { username, age, hobbies } = req.body;
