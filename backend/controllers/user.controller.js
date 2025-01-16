@@ -29,16 +29,33 @@ export const getAllUsers = asyncHandler(async (_, res) => {
 
 export const updateUser = asyncHandler(async (req, res) => {
     const { id } = req.params;
-    const { userName, nodes, edges } = req.body;
+    const { nodes, edges } = req.body;
     const user = await User.findByIdAndUpdate(
         id,
-        { $set: { userName, nodes, edges } },
+        { $set: { nodes, edges } },
         { new: true }
     );
     if (!user) {
         throw new ApiError(404, "User not found");
     }
     return res.status(200).json(new ApiResponse(200, "User updated successfully", user));
+});
+
+export const updateUserName = asyncHandler(async (req, res) => {
+    const { id } = req.params;
+    const { userName } = req.body;
+    if (!userName) {
+        throw new ApiError(400, "userName is required");
+    }
+    const user = await User.findByIdAndUpdate(
+        id,
+        { $set: { userName } },
+        { new: true }
+    );
+    if (!user) {
+        throw new ApiError(404, "User not found");
+    }
+    return res.status(200).json(new ApiResponse(200, "User name updated successfully", user));
 });
 
 export const deleteUser = asyncHandler(async (req, res) => {

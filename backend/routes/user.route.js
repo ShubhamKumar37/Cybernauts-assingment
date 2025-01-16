@@ -5,6 +5,7 @@ import {
   updateUser,
   deleteUser,
   getAllUsers, // Added getAllUsers route
+  updateUserName,
 } from "../controllers/user.controller.js";
 
 const router = express.Router();
@@ -20,6 +21,7 @@ router.get("/", getAllUsers);
 
 // Update a user by ID
 router.put("/:id", updateUser);
+router.put("/names/:id", updateUserName);
 
 // Delete a user by ID
 router.delete("/:id", deleteUser);

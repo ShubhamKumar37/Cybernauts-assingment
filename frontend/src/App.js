@@ -9,13 +9,19 @@ function App() {
 
   return (
     <div className="flex flex-row w-full h-[100vh]">
-      {/* Side menu */}
-      <SideMenu />
+      {/* Conditionally render the SideMenu based on activeFlow */}
+      {!activeFlow ? (
+        <SideMenu />
+      ) : (
+        <div className="w-[30%] flex justify-center items-center bg-gray-200 opacity-80 pointer-events-none">
+          Please close a flow first
+        </div>
+      )}
 
       {/* Main nodes (React Flow component) */}
       <div className="w-[70%]">
         {activeFlow && flows.length > 0 ? (
-          <Flows />
+          <Flows activeFlow={activeFlow} />
         ) : (
           <div className="flex justify-center items-center h-full text-gray-500">
             Select or create a flow to start working with React Flow

@@ -1,7 +1,9 @@
 import React, { useState, useEffect } from "react";
 import { useDispatch, useSelector } from 'react-redux';
-import { addFlow, selectFlow, setFlows, deleteFlow, updateFlow } from '../redux/slices/flowSlice';  // Added setFlows action
+import { addFlow, selectFlow, setFlows, deleteFlow, updateFlow } from '../redux/slices/flowSlice';
 import axios from 'axios';
+import { toast } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
 
 const SideMenu = () => {
     const dispatch = useDispatch();
@@ -10,17 +12,19 @@ const SideMenu = () => {
 
     const [newFlowName, setNewFlowName] = useState("");
     const [editFlowName, setEditFlowName] = useState(""); // For storing the flow name while editing
-    const [isEditing, setIsEditing] = useState(false); // For toggle edit mode
+    const [editingFlowId, setEditingFlowId] = useState(null); // To track which flow is being edited
 
     // Fetch flows when component mounts
     useEffect(() => {
         const fetchFlows = async () => {
             try {
+                toast.info("Loading flows...");
                 const response = await axios.get('/api/users/', { withCredentials: true });
-                console.log("Fetched flows:", response.data.data);
                 dispatch(setFlows(response.data.data)); // Dispatch the fetched flows to Redux
+                toast.success("Flows loaded successfully!");
             } catch (error) {
                 console.error("Error fetching flows:", error);
+                toast.error("Error loading flows.");
             }
         };
 
@@ -29,9 +33,9 @@ const SideMenu = () => {
 
     // Function to handle creating a new flow
     const createNewFlow = async () => {
-        console.log("This is the new flow name  = ", newFlowName)
         if (newFlowName.trim()) {
             try {
+                toast.info("Creating new flow...");
                 const flowData = {
                     userName: newFlowName, // Flow name
                     nodes: [], // Start with an empty array for nodes
@@ -43,57 +47,83 @@ const SideMenu = () => {
                 if (response.data.success) {
                     const newFlow = response.data.data;
                     dispatch(addFlow(newFlow)); // Add the new flow to Redux state
-                    dispatch(selectFlow(newFlow.id)); // Set it as the active flow
+                    dispatch(selectFlow(newFlow._id)); // Set it as the active flow using _id
                     setNewFlowName(""); // Reset the input field
+                    toast.success("Flow created successfully!");
+                } else {
+                    toast.error("Error creating flow.");
                 }
             } catch (error) {
                 console.error("Error creating flow:", error);
+                toast.error("Error creating flow.");
             }
+        } else {
+            toast.warning("Please enter a flow name.");
         }
     };
 
     // Function to handle flow selection
     const handleFlowSelect = (flowId) => {
-        dispatch(selectFlow(flowId)); // Dispatch the selectFlow action
+        dispatch(selectFlow(flowId)); // Dispatch the selectFlow action using _id
+        toast.info("Flow selected.");
     };
 
     // Function to handle editing a flow's name
-    const handleEditFlow = (flow) => {
-        setIsEditing(true);
+    const handleEditFlow = (flow, e) => {
+        e.stopPropagation();
+        setEditingFlowId(flow._id); // Set the flow's _id to editing mode
         setEditFlowName(flow.userName); // Set the flow's current name to the edit state
     };
 
     // Function to save the edited flow name
-    const saveEditedFlow = (flowId) => {
+    const saveEditedFlow = async (flowId) => {
         if (editFlowName.trim()) {
-            const updatedFlow = { _id: flowId, userName: editFlowName };
-            dispatch(updateFlow(updatedFlow)); // Dispatch the updateFlow action
-            setIsEditing(false);
+            try {
+                toast.info("Saving flow name...");
+                const response = await axios.put(`/api/users/names/${flowId}`, { userName: editFlowName }, { withCredentials: true });
+
+                if (response.data.success) {
+                    dispatch(updateFlow(response.data.data));
+                    setEditingFlowId(null);
+                    setEditFlowName("");
+                    toast.success("Flow name updated successfully!");
+                } else {
+                    toast.error("Error updating flow name.");
+                }
+            } catch (error) {
+                console.error("Error updating flow:", error);
+                toast.error("Error updating flow name.");
+            }
+        } else {
+            toast.warning("Flow name cannot be empty.");
         }
     };
 
     // Function to handle deleting a flow
-    const handleDeleteFlow = async (flowId, flowDbId) => {
+    const handleDeleteFlow = async (flowId, e) => {
+        e.stopPropagation();
         try {
-            // Send DELETE request to backend to delete the flow
-            const response = await axios.delete(`/api/users/${flowDbId}`, { withCredentials: true });
+            toast.info("Deleting flow...");
+            const response = await axios.delete(`/api/users/${flowId}`, { withCredentials: true });
 
             if (response.data.success) {
-                // Dispatch the deleteFlow action to remove the flow from Redux state
                 dispatch(deleteFlow(flowId));
 
-                // If the active flow is deleted, reset the active flow
                 if (activeFlow === flowId) {
                     dispatch(selectFlow(null));
                 }
+                toast.success("Flow deleted successfully!");
+            } else {
+                toast.error("Error deleting flow.");
             }
         } catch (error) {
             console.error("Error deleting flow:", error);
+            toast.error("Error deleting flow.");
         }
     };
 
     return (
-        <div className="w-[30%] bg-green-500 p-4">
+        <div className="w-[30%] bg-blue-400 p-4">
             <h2 className="text-white mb-4">Create New Flow</h2>
             <input
                 type="text"
@@ -114,33 +144,33 @@ const SideMenu = () => {
             <ul className="text-white">
                 {flows.map((flow) => (
                     <li
-                        key={flow._id} // Use _id for MongoDB documents
-                        className={`flex items-center justify-between cursor-pointer mb-2 p-2 rounded hover:bg-gray-700 ${activeFlow === flow.id ? "bg-gray-500" : ""}`}
-                        onClick={() => handleFlowSelect(flow.id)}
+                        key={flow._id}
+                        className={`flex items-center justify-between cursor-pointer mb-2 p-2 rounded hover:bg-blue-700 ${activeFlow === flow._id ? "bg-gray-500" : ""}`}
+                        onClick={() => { if (!editingFlowId) handleFlowSelect(flow._id) }}
                     >
                         <span className="max-w-[60%]">
-                            {isEditing && activeFlow === flow.id ? (
+                            {editingFlowId === flow._id ? (
                                 <input
                                     type="text"
                                     value={editFlowName}
-                                    onChange={(e) => setEditFlowName(e.target.value)} // This binds the input to `editFlowName`
+                                    onChange={(e) => { e.stopPropagation(); setEditFlowName(e.target.value) }}
                                     className="p-1 w-full border border-gray-300 bg-black rounded"
                                 />
                             ) : (
-                                flow.userName // Display flow name (userName from backend)
+                                flow.userName
                             )}
                         </span>
                         <div className="flex space-x-2 max-w-[40%] text-sm">
-                            {isEditing && activeFlow === flow.id ? (
+                            {editingFlowId === flow._id ? (
                                 <button
-                                    onClick={() => saveEditedFlow(flow.id)}
+                                    onClick={() => saveEditedFlow(flow._id)}
                                     className="p-1 bg-green-500 text-white rounded"
                                 >
                                     Save
                                 </button>
                             ) : (
                                 <button
-                                    onClick={() => handleEditFlow(flow)}
+                                    onClick={(e) => handleEditFlow(flow, e)}
                                     className="p-1 bg-yellow-500 text-white rounded"
                                 >
                                     Edit
@@ -148,7 +178,7 @@ const SideMenu = () => {
                             )}
 
                             <button
-                                onClick={() => handleDeleteFlow(flow.id, flow._id)} // Use `_id` for deletion
+                                onClick={(e) => handleDeleteFlow(flow._id, e)}
                                 className="p-1 bg-red-500 text-white rounded"
                             >
                                 Delete

@@ -13,13 +13,13 @@ const flowSlice = createSlice({
       state.flowList.push(action.payload);
     },
     updateFlow: (state, action) => {
-      const index = state.flowList.findIndex(flow => flow.id === action.payload.id);
+      const index = state.flowList.findIndex(flow => flow._id === action.payload._id);
       if (index !== -1) {
         state.flowList[index] = action.payload;
       }
     },
     deleteFlow: (state, action) => {
-      state.flowList = state.flowList.filter(flow => flow.id !== action.payload);
+      state.flowList = state.flowList.filter(flow => flow._id !== action.payload);
     },
     selectFlow: (state, action) => {
       state.selectedFlow = action.payload;
